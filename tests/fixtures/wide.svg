@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="240" viewBox="0 0 800 240">
+  <rect width="800" height="240" fill="#e9f1ff"/>
+  <rect x="6" y="6" width="788" height="228" fill="none" stroke="#2458ae" stroke-width="12"/>
+  <circle cx="100" cy="120" r="55" fill="#2458ae"/>
+  <text x="200" y="140" font-family="Arial" font-size="54" fill="#183d79">WIDE · 800 × 240</text>
+</svg>

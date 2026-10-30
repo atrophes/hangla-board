@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f6f5f1" />
+    <title>夯拉榜｜截图排位工具</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="./app.js" type="module"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="夯拉榜首页">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span>夯拉榜</span>
+        </a>
+
+        <div class="topbar-actions">
+          <div class="history-actions" aria-label="历史操作">
+            <button class="icon-button" id="undoButton" type="button" title="撤销" aria-label="撤销">
+              <i data-lucide="undo-2"></i>
+            </button>
+            <button class="icon-button" id="redoButton" type="button" title="重做" aria-label="重做">
+              <i data-lucide="redo-2"></i>
+            </button>
+          </div>
+          <button class="button button-secondary" id="tierSettingsButton" type="button" aria-label="编辑评级">
+            <i data-lucide="sliders-horizontal"></i>
+            <span>编辑评级</span>
+          </button>
+          <button class="button button-secondary" id="copyBoardButton" type="button" aria-label="复制图片" title="仅复制完整榜单，不下载">
+            <i data-lucide="copy"></i>
+            <span>复制图片</span>
+          </button>
+          <button class="button button-primary" id="exportButton" type="button" aria-label="导出图片">
+            <i data-lucide="download"></i>
+            <span>导出图片</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="asset-panel" aria-label="素材库">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">图片素材</p>
+              <h2>候选区</h2>
+            </div>
+            <span class="count-badge" id="assetCount">0</span>
+          </div>
+
+          <label class="upload-zone" id="uploadZone" for="fileInput">
+            <input id="fileInput" type="file" accept="image/*" multiple hidden />
+            <span class="upload-icon"><i data-lucide="image-plus"></i></span>
+            <strong>粘贴或上传截图</strong>
+            <span>PNG、JPG、WebP</span>
+          </label>
+
+          <p class="panel-hint">导入即加入画布，移除后可从这里重新添加。</p>
+          <div class="asset-list" id="assetList" aria-live="polite"></div>
+        </aside>
+
+        <section class="board-area" aria-label="榜单编辑区">
+          <div class="board-toolbar">
+            <p class="board-hint">自由拖动 · 四角等比缩放 · 放满自动向右扩展</p>
+            <div class="extension-actions">
+              <button class="button button-secondary" id="extendTopButton" type="button"><i data-lucide="arrow-up-to-line"></i><span>向上扩展</span></button>
+              <button class="button button-secondary" id="extendBottomButton" type="button"><i data-lucide="arrow-down-to-line"></i><span>向下扩展</span></button>
+              <button class="button button-ghost" id="retractTopButton" type="button" hidden>收回上方留白</button>
+              <button class="button button-ghost" id="retractBottomButton" type="button" hidden>收回下方留白</button>
+            </div>
+          </div>
+
+          <div class="board-viewport" id="boardViewport">
+            <div class="rank-board" id="rankBoard" aria-label="自由排位画布">
+              <svg id="boardBackground" class="board-background" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+              <div id="placementLayer" class="placement-layer"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="selection-bar" id="selectionBar" hidden>
+      <div class="selection-preview" id="selectionPreview"></div>
+      <span id="selectionLabel">已选择</span>
+      <label class="resize-control" for="imageScale"><span>缩放</span><input id="imageScale" type="range" min="10" max="400" step="1" value="100" /><output id="scaleOutput" for="imageScale">100%</output></label>
+      <button class="icon-button inverse" id="removePlacementButton" type="button" aria-label="从画布移除" title="从画布移除，保留候选图片"><i data-lucide="trash-2"></i></button>
+      <button class="icon-button inverse" id="clearSelectionButton" type="button" aria-label="取消选择" title="取消选择">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+
+    <dialog class="modal" id="tierModal">
+      <form method="dialog" class="modal-card" id="tierForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">榜单结构</p>
+            <h2>编辑评级</h2>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" formnovalidate aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="tier-editor" id="tierEditor"></div>
+        <div class="tier-add-actions">
+          <button class="add-tier-button" id="addTopTierButton" type="button"><i data-lucide="plus"></i><span>顶部添加评级</span></button>
+          <button class="add-tier-button" id="addTierButton" type="button"><i data-lucide="plus"></i><span>底部添加评级</span></button>
+        </div>
+        <div class="modal-actions">
+          <button class="button button-ghost" value="cancel" type="submit" formnovalidate>取消</button>
+          <button class="button button-primary" id="saveTiersButton" value="default" type="submit">保存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="itemModal">
+      <form method="dialog" class="modal-card compact" id="itemForm">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">素材信息</p>
+            <h2>编辑名称</h2>
+          </div>
+          <button class="icon-button" value="cancel" type="submit" aria-label="关闭" title="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <label class="field-label" for="itemNameInput">名称</label>
+        <input class="text-input" id="itemNameInput" maxlength="36" autocomplete="off" />
+        <div class="modal-actions split-actions">
+          <div>
+            <button class="button button-danger" id="deleteItemButton" type="button"><i data-lucide="trash-2"></i><span>从候选区删除</span></button>
+          </div>
+          <div>
+            <button class="button button-ghost" value="cancel" type="submit">取消</button>
+            <button class="button button-primary" id="saveItemButton" value="default" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog class="modal export-modal" id="exportModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>导出预览</h2>
+          <button class="icon-button" id="closeExportButton" type="button" aria-label="关闭导出预览"><i data-lucide="x"></i></button>
+        </div>
+        <div class="export-preview"><img id="exportPreview" alt="完整榜单导出预览" /></div>
+        <p class="export-help" id="exportHelp"></p>
+        <div class="modal-actions">
+          <button class="button button-secondary" id="copyExportButton" type="button">复制图片</button>
+          <button class="button button-primary" id="saveExportButton" type="button">选择位置保存并复制</button>
+        </div>
+        <p class="export-status" id="exportStatus" role="status" aria-live="polite"></p>
+      </div>
+    </dialog>
+  </body>
+</html>

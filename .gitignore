@@ -1,0 +1,7 @@
+.DS_Store
+*.log
+artifacts/
+_site/
+node_modules/
+.env
+.env.*
